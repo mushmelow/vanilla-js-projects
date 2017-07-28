@@ -45,14 +45,24 @@
     
     function getDailyWeather(coords){
       var url = `${CORS_PROXY}${DARKSKY_API_URL}${DARKSKY_API_KEY}/${coords.lat},${coords.lng}?units=si&exclude=currently,minutely,hourly,alerts,flags`;
-      
       return(
         fetch(url)
          .then(response=> response.json())
-         .then(data=> data.daily.data[0])
+         .then(data=>data.daily.data)
         );
     }
-  
+
+    function sky(icon,day) {  
+      
+      var skycons = new Skycons({"color": "red"});
+      var classIcon= document.getElementsByClassName("icon") 
+      
+       console.log("sly " ,classIcon)
+      skycons.add((classIcon[day]),icon.toString());
+      skycons.play();
+    
+    }
+
 
    
     
@@ -62,8 +72,10 @@
     //var getWeatherButton = cityForm.que//rySelector('.get-weather-button');
     //var cityWeather = app.querySelector('.city-weather');
     
+    var dailyBorder =  document.getElementsByClassName('city-weather'); 
     
-
+    dailyBorder[0].classList.add('redborder');
+    dailyBorder[1].classList.add('redborder');
   
     
     cityForm.addEventListener('submit', function(event) { // this line changes
@@ -76,19 +88,42 @@
       var city = cityInput.value;
     
       setTimeout(function() { getCoordinatesForCity(city)
-        .then(getCurrentWeather)
+        //.then(getCurrentWeather)
         
-        .then(function(weather) {
-            //console.log(weather)
+      .then( coords => {
+       return Promise.all([ getCurrentWeather(coords), getDailyWeather(coords)])
+      })
+        .then(function(data) {
+           
+           var currentWeather = data[0];
+           var dailyWeather = data[1];
+           
           document.getElementById("loading").innerHTML = "";
-          document.getElementById("temperature").innerHTML= 'Current temperature: ' + weather.temperature;
-          document.getElementById("windSpeed").innerHTML="Wind Speed: "+ weather.windSpeed;
+          document.getElementById("temperature").innerHTML= 'Current temperature: ' + currentWeather.temperature;
+          document.getElementById("windSpeed").innerHTML="Wind Speed: "+ currentWeather.windSpeed;
+          sky(currentWeather.icon,0);
           
-          
-          sky(weather.icon);
+          //console.log(dailyWeather[1].icon)
+         
         
-        });
-      
+        
+         dailyBorder[1].innerHTML= "day 1 max temperature: "+ dailyWeather[1].temperatureMax;
+         
+         
+         
+         
+         sky(dailyWeather[1].icon, 1);
+          
+          
+          //var daily=document.getElementsByClassName("city-weather");
+          
+          
+          
+          return data[1];
+        })
+        
+        
+        
       
       }, 1000);
     
@@ -103,17 +138,7 @@
 
 document.querySelector('h1').style.color = 'red';
 
-var dailyBorder =  document.getElementsByClassName('city-weather'); 
 
-console.log(dailyBorder);
-dailyBorder[0].classList.add('redborder');
 
  
 
-function sky(icon) {  
-  
-var skycons = new Skycons({"color": "red"});
-skycons.add(document.getElementById("icon0"), icon.toString());
-skycons.play();
-
-}
